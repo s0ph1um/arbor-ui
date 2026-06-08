@@ -1,7 +1,7 @@
 import { Suspense, useState } from "react";
 import { Card, Text, Group, Badge, ActionIcon, Loader, Stack, Alert, Tooltip, Modal } from "@mantine/core";
-import { IconTrash, IconInfoCircle, IconEdit, IconGitFork } from "@tabler/icons-react";
-import { useTrees, useDeleteTree, useForkTree, useUpdateTree } from "../../hooks/useTrees";
+import { IconTrash, IconInfoCircle, IconEdit, IconGitFork, IconPencilShare } from "@tabler/icons-react";
+import { useTrees, useDeleteTree, useForkTree, useUpdateTree, useShareTree } from "../../hooks/useTrees";
 import type { Tree, UpdateTreeDto } from "../../types/tree.types";
 import { type ForkTreeDto, ForkTreeForm } from "../forms/ForkTreeForm.tsx";
 import { UpdateTreeForm } from "../forms/UpdateTreeForm.tsx";
@@ -9,6 +9,7 @@ import classes from "./TreeList.module.css";
 import { modals } from "@mantine/modals";
 import { useAuth } from "../../context/AuthContext.tsx";
 import { canManageTree } from "../../utils/permissions.ts";
+import { ShareTreeForm } from "../forms/ShareTreeForm.tsx";
 
 export function TreeList() {
   return (
@@ -18,7 +19,7 @@ export function TreeList() {
   );
 }
 
-type ModalType = "edit" | "fork" | null;
+type ModalType = "edit" | "fork" | "share" | null;
 
 function TreeListContent() {
   const { trees, isLoading, error } = useTrees();
@@ -28,6 +29,23 @@ function TreeListContent() {
   const { currentUser } = useAuth();
   const [modalType, setModalType] = useState<ModalType>(null);
   const [selectedTree, setSelectedTree] = useState<Tree | null>(null);
+  const shareTree = useShareTree();
+
+  const handleShareClick = (tree: Tree) => {
+    setSelectedTree(tree);
+    setModalType("share");
+  };
+
+  const handleShareSubmit = async (userIds: number[]) => {
+    if (!selectedTree) return;
+    await shareTree.mutateAsync({
+      treeId: selectedTree.id,
+      userIds
+    });
+    closeModal();
+  };
+
+  const isOwner = (tree: Tree) => currentUser?.id === tree.ownerId;
 
   if (isLoading) {
     return (
@@ -68,16 +86,16 @@ function TreeListContent() {
 
   const handleDeleteClick = (tree: Tree) => {
     modals.openConfirmModal({
-      title: 'Delete Tree',
+      title: "Delete Tree",
       centered: true,
       children: (
         <Text size="sm">
           Are you sure you want to delete <strong>"{tree.title}"</strong>?
         </Text>
       ),
-      labels: { confirm: 'Delete', cancel: 'Cancel' },
-      confirmProps: { color: 'red', leftSection: <IconTrash size={16} /> },
-      onConfirm: () => deleteTreeHook.mutate(tree.id),
+      labels: { confirm: "Delete", cancel: "Cancel" },
+      confirmProps: { color: "red", leftSection: <IconTrash size={16} /> },
+      onConfirm: () => deleteTreeHook.mutate(tree.id)
     });
   };
 
@@ -90,11 +108,11 @@ function TreeListContent() {
   const handleForkSubmit = async (data: ForkTreeDto) => {
     if (!selectedTree) return;
 
-      await forkTreeHook.mutateAsync({
-        treeId: selectedTree.id,
-        title: data.title,
-      });
-      closeModal();
+    await forkTreeHook.mutateAsync({
+      treeId: selectedTree.id,
+      title: data.title
+    });
+    closeModal();
   };
 
   const closeModal = () => {
@@ -126,7 +144,6 @@ function TreeListContent() {
             tree={selectedTree}
             onSubmit={handleUpdateSubmit}
             onCancel={closeModal}
-            // isLoading={isSubmitting}
           />
         )}
       </Modal>
@@ -142,6 +159,22 @@ function TreeListContent() {
             tree={selectedTree}
             onSubmit={handleForkSubmit}
             onCancel={closeModal}
+          />
+        )}
+      </Modal>
+
+      <Modal
+        opened={modalType === "share"}
+        onClose={closeModal}
+        title={`Share Tree: ${selectedTree?.title}`}
+        size="lg"
+      >
+        {selectedTree && (
+          <ShareTreeForm
+            tree={selectedTree}
+            onSubmit={handleShareSubmit}
+            onCancel={closeModal}
+            isLoading={shareTree.isPending}
           />
         )}
       </Modal>
@@ -195,6 +228,26 @@ function TreeListContent() {
                       <IconGitFork size={16} />
                     </ActionIcon>
                   </Tooltip>
+                  <Tooltip
+                    label={
+                      isOwner(tree) ? "Share tree" : "Only owner can share"
+                    }
+                    withArrow
+                    position="top"
+                  >
+                    <ActionIcon
+                      variant="light"
+                      color="violet"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleShareClick(tree);
+                      }}
+                      disabled={!isOwner(tree)}
+                      aria-label="Share tree"
+                    >
+                      <IconPencilShare size={16} />
+                    </ActionIcon>
+                  </Tooltip>
                   <Tooltip label="Delete tree" withArrow position="top">
                     <ActionIcon
                       variant="light"
@@ -232,7 +285,6 @@ function TreeListContent() {
             </Card>
           );
         })}
-
       </Stack>
     </>
   );

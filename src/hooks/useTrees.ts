@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { treesApi } from "../api/trees";
 import type { CreateTreeDto, Tree, UpdateTreeDto } from "../types/tree.types";
 import { notifications } from "@mantine/notifications";
-import { getErrorMessage } from "../components/tree/util.ts";
+import { getErrorMessage } from "../components/tree/util.tsx";
 
 export const useTrees = (type?: string): { trees: Tree[], isLoading: boolean, error: Error | null } => {
   const { data, isLoading, error } = useQuery({
@@ -11,7 +11,6 @@ export const useTrees = (type?: string): { trees: Tree[], isLoading: boolean, er
   });
   if (data && typeof data === "object" && "content" in data) {
     return { trees: data.content as Tree[], isLoading, error };
-
   }
   return { trees: [], isLoading, error };
 };
@@ -112,5 +111,30 @@ export const useDeleteTree = () => {
         color: "red"
       });
     }
+  });
+};
+
+export const useShareTree = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ treeId, userIds }: { treeId: number; userIds: number[] }) =>
+      treesApi.shareTree(treeId, userIds),
+    onSuccess: (_, { treeId }) => {
+      queryClient.invalidateQueries({ queryKey: ["tree", treeId] });
+      queryClient.invalidateQueries({ queryKey: ["trees"] });
+      notifications.show({
+        title: "Success",
+        message: "Tree shared successfully",
+        color: "green",
+      });
+    },
+    onError: (error: Error) => {
+      notifications.show({
+        title: "Error",
+        message: getErrorMessage(error, "Failed to share tree"),
+        color: "red",
+      });
+    },
   });
 };

@@ -33,6 +33,9 @@ import { modals } from "@mantine/modals";
 import { useCreateNode, useDeleteNode, useMoveNode, useUpdateNode } from "../hooks/useNodes.ts";
 import { canEditTreeStructure } from "../utils/permissions.ts";
 import { useAuth } from "../context/AuthContext.tsx";
+import { useNotifications } from "../hooks/useNotifications.ts";
+import type { TreeUpdateNotification } from "../types/notification.types.ts";
+import { notifyOnTreeStructureChange } from "../components/tree/util.tsx";
 
 type ModalType = "create" | "edit" | "move" | null;
 
@@ -61,6 +64,25 @@ function TreeDetailContent() {
   const updateNodeHook = useUpdateNode();
   const moveNodeHook = useMoveNode();
   const { currentUser } = useAuth();
+
+  useNotifications(treeId, {
+    onNodeCreated: (notification: TreeUpdateNotification) =>
+      notifyOnTreeStructureChange(
+        `${notification.authorName} (${notification.authorEmail}) created node "${notification.nodeTitle}" (id: ${notification.nodeId})`
+      ),
+    onNodeUpdated: (notification: TreeUpdateNotification) =>
+      notifyOnTreeStructureChange(
+        `${notification.authorName} (${notification.authorEmail}) updated node "${notification.nodeTitle}" (id: ${notification.nodeId})`
+      ),
+    onNodeMoved: (notification: TreeUpdateNotification) =>
+      notifyOnTreeStructureChange(
+        `${notification.authorName} (${notification.authorEmail}) moved node "${notification.nodeTitle}" (id: ${notification.nodeId}) from the parent "${notification.oldParentId}" to the new parent "${notification.newParentId}"`
+      ),
+    onNodeDeleted: (notification: TreeUpdateNotification) =>
+      notifyOnTreeStructureChange(
+        `${notification.authorName} (${notification.authorEmail}) deleted nodes [${notification.deletedNodeIds}]"`
+      )
+  });
 
   if (isTreeLoading) return <Loader />;
   if (!tree) return <Text>Tree not found</Text>;

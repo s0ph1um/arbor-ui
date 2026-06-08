@@ -17,7 +17,7 @@ export function UpdateNodeForm({ node, onSubmit, onCancel }: UpdateNodeFormProps
     handleSubmit,
     watch,
     control,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isDirty }
   } = useForm<InferType<typeof updateNodeSchema>>({
     resolver: yupResolver(updateNodeSchema) as unknown as Resolver<InferType<typeof updateNodeSchema>>,
     defaultValues: {
@@ -25,8 +25,8 @@ export function UpdateNodeForm({ node, onSubmit, onCancel }: UpdateNodeFormProps
       description: node.description || "",
       nodeType: node.nodeType || NodeType.DEFAULT,
       flagValue: node.flagValue || false,
-      linkValue: node.linkValue || "",
-    },
+      linkValue: node.linkValue || ""
+    }
   });
 
   const nodeType = watch("nodeType");
@@ -97,7 +97,7 @@ export function UpdateNodeForm({ node, onSubmit, onCancel }: UpdateNodeFormProps
             <Button variant="subtle" onClick={onCancel} disabled={isSubmitting}>
               Cancel
             </Button>
-            <Button type="submit" loading={isSubmitting}>
+            <Button type="submit" loading={isSubmitting} disabled={!isDirty}>
               Update Node
             </Button>
           </Group>

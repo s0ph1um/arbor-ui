@@ -48,9 +48,6 @@ export function Layout() {
                       >
                         {currentUser.name?.charAt(0) || <IconUser size={14} />}
                       </Avatar>
-                      {/*<Avatar size="sm" radius="xl" color="blue">*/}
-                      {/*  /!*{user.name?.charAt(0) || user.email?.charAt(0) || <IconUser size={14} />}*!/*/}
-                      {/*</Avatar>*/}
                       <Text size="sm" visibleFrom="sm">
                         {currentUser.name || currentUser.email}
                       </Text>

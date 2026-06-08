@@ -1,23 +1,18 @@
-import { apiClient } from './client';
+import { apiClient } from "./client";
 import type { TreeNode, UpdateNodeDto } from "../types/tree.types";
 
 export const nodesApi = {
-  getNode: async (id: number): Promise<TreeNode> => {
-    const { data } = await apiClient.get(`/node/${id}`);
-    return data;
+
+  moveNode: async (
+    treeId: number,
+    nodeId: number,
+    newParentId: number
+  ): Promise<void> => {
+    await apiClient.put(`/tree/${treeId}/node/${nodeId}/move/${newParentId}`);
   },
 
-  getChildNodes: async (id: number): Promise<TreeNode[]> => {
-    const { data } = await apiClient.get(`/nodes/${id}`);
-    return data;
-  },
-
-  moveNode: async (id: number, newParentId: number): Promise<void> => {
-    await apiClient.put(`/node/${id}/move/${newParentId}`);
-  },
-
-  deleteNode: async (nodeId: number): Promise<void> => {
-    await apiClient.delete(`/node/${nodeId}`);
+  deleteNode: async (treeId: number, nodeId: number): Promise<void> => {
+    await apiClient.delete(`/tree/${treeId}/node/${nodeId}`);
   },
 
   updateNode: async (
@@ -30,5 +25,5 @@ export const nodesApi = {
       data
     );
     return response.data;
-  },
+  }
 };

@@ -2,18 +2,14 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { treesApi } from "../api/trees";
 import type { CreateNodeDto, UpdateNodeDto } from "../types/tree.types";
 import { notifications } from "@mantine/notifications";
-import { getErrorMessage } from "../components/tree/util.ts";
+import { getErrorMessage } from "../components/tree/util.tsx";
 import { nodesApi } from "../api/nodes.ts";
 
 export const useCreateNode = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-                         treeId,
-                         data,
-                         selectedParentId
-                       }: {
+    mutationFn: async ({ treeId, data, selectedParentId }: {
       treeId: number;
       data: CreateNodeDto;
       selectedParentId: number;
@@ -45,10 +41,10 @@ export const useDeleteNode = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ nodeId }: { nodeId: number; treeId: number }) =>
-      nodesApi.deleteNode(nodeId),
+    mutationFn: ({ treeId, nodeId }: { treeId: number; nodeId: number }) =>
+      nodesApi.deleteNode(treeId, nodeId),
     onSuccess: async (_data, { treeId }) => {
-      await queryClient.invalidateQueries({ queryKey: ["tree", treeId] }); // ✅ правильный ключ
+      await queryClient.invalidateQueries({ queryKey: ["tree", treeId] });
       notifications.show({
         title: "Success",
         message: "Node deleted successfully",
@@ -69,18 +65,11 @@ export const useUpdateNode = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-                   treeId,
-                   nodeId,
-                   data
-                 }: {
+    mutationFn: ({ treeId, nodeId, data }: {
       treeId: number;
       nodeId: number;
       data: UpdateNodeDto;
-    }) => {
-      return nodesApi.updateNode(treeId, nodeId, data);
-      ;
-    },
+    }) => nodesApi.updateNode(treeId, nodeId, data),
     onSuccess: async (_, { treeId }) => {
       await queryClient.invalidateQueries({ queryKey: ["tree", treeId] });
       await queryClient.invalidateQueries({ queryKey: ["trees"] });
@@ -104,12 +93,12 @@ export const useMoveNode = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ nodeId, newParentId }: {
+    mutationFn: ({ treeId, nodeId, newParentId }: {
       treeId: number;
       nodeId: number;
       newParentId: number;
     }) => {
-      return nodesApi.moveNode(nodeId, newParentId);
+      return nodesApi.moveNode(treeId, nodeId, newParentId);
     },
     onSuccess: async (_, { treeId }) => {
       await queryClient.invalidateQueries({ queryKey: ["tree", treeId] });
