@@ -20,7 +20,7 @@ import {
   IconSettings,
   IconArrowLeft,
   IconInfoCircle,
-  IconPlus, IconTrash
+  IconPlus, IconTrash, IconHistory
 } from "@tabler/icons-react";
 import { useTree, useTreeStatistics } from "../hooks/useTree";
 import { TreeNode as TreeNodeComponent } from "../components/tree/TreeNode";
@@ -36,6 +36,8 @@ import { useAuth } from "../context/AuthContext.tsx";
 import { useNotifications } from "../hooks/useNotifications.ts";
 import type { TreeUpdateNotification } from "../types/notification.types.ts";
 import { notifyOnTreeStructureChange } from "../components/tree/util.tsx";
+import { ChangelogDrawer } from "../components/tree/ChangelogDrawer.tsx";
+import { useDisclosure } from "@mantine/hooks";
 
 type ModalType = "create" | "edit" | "move" | null;
 
@@ -56,14 +58,15 @@ function TreeDetailContent() {
   const [modalType, setModalType] = useState<ModalType>(null);
   const [selectedNode, setSelectedNode] = useState<TreeNode | null>(null);
   const [selectedParentId, setSelectedParentId] = useState<number | undefined>();
-
   const { data: tree, isLoading: isTreeLoading } = useTree(Number(id));
+
   const { data: statistics } = useTreeStatistics(Number(id));
   const deleteNodeHook = useDeleteNode();
   const createNodeHook = useCreateNode();
   const updateNodeHook = useUpdateNode();
   const moveNodeHook = useMoveNode();
   const { currentUser } = useAuth();
+  const [changelogOpened, { open: openChangelog, close: closeChangelog }] = useDisclosure(false);
 
   useNotifications(treeId, {
     onNodeCreated: (notification: TreeUpdateNotification) =>
@@ -188,6 +191,20 @@ function TreeDetailContent() {
           </Button>
           <Title order={2}>{tree.title}</Title>
         </Group>
+        <Group>
+          <Button
+            variant="light"
+            leftSection={<IconHistory size={16} />}
+            onClick={openChangelog}
+          >
+            History
+          </Button>
+          <ChangelogDrawer
+            treeId={treeId}
+            opened={changelogOpened}
+            onClose={closeChangelog}
+          />
+        </Group>
       </Group>
 
       {tree.description && (
@@ -293,6 +310,18 @@ function TreeDetailContent() {
             </Stack>
           </Paper>
         </Tabs.Panel>
+
+        {/*<Tabs.Panel value="history" pt="xl">*/}
+        {/*  <Paper shadow="xs" p="md">*/}
+        {/*    <Stack>*/}
+        {/*      <ChangelogDrawer*/}
+        {/*        treeId={treeId}*/}
+        {/*        opened={changelogOpened}*/}
+        {/*        onClose={closeChangelog}*/}
+        {/*      />*/}
+        {/*    </Stack>*/}
+        {/*  </Paper>*/}
+        {/*</Tabs.Panel>*/}
 
         <Tabs.Panel value="settings" pt="xl">
           <Paper shadow="xs" p="md">
